@@ -1,0 +1,15 @@
+enum IdeRender {
+  appbar,
+  menubarBottom,
+  panelBottom,
+  content,
+  leftMenu,
+  panelLeft,
+  menubar,
+  progress,
+  menubarRight,
+  panelRight,
+  statusbar,
+  menubarTop,
+  toolbar,
+}

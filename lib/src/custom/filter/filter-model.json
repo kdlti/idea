@@ -1,0 +1,37 @@
+{
+  "filters": [
+    {
+      "index": 0,
+      "logic": "AND",
+      "op": "EQ",
+      "field": "status",
+      "value": "active"
+    },
+    {
+      "index": 1,
+      "logic": "AND",
+      "op": "EQ",
+      "field": "type",
+      "value": "premium",
+      "subFilters": [
+        {
+          "index": 0,
+          "logic": "OR",
+          "op": "GTE",
+          "field": "discount",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "logic": "OR",
+      "op": "BETWEEN",
+      "field": "price",
+      "value": [
+        50,
+        100
+      ]
+    }
+  ]
+}
