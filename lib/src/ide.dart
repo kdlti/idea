@@ -15,23 +15,23 @@ typedef OnNext = void Function();
 class Ide {
   /// Método utilitário para logar mensagens de erro.
   static get logError => Logger(
-        printer: PrettyPrinter(),
-      ).e;
+    printer: PrettyPrinter(),
+  ).e;
 
   /// Método utilitário para logar mensagens de informação.
   static get logInfo => Logger(
-        printer: PrettyPrinter(),
-      ).i;
+    printer: PrettyPrinter(),
+  ).i;
 
   /// Método utilitário para logar mensagens de depuração.
   static get logDebug => Logger(
-        printer: PrettyPrinter(),
-      ).d;
+    printer: PrettyPrinter(),
+  ).d;
 
   /// Método utilitário para logar mensagens de aviso.
   static get logWarning => Logger(
-        printer: PrettyPrinter(),
-      ).w;
+    printer: PrettyPrinter(),
+  ).w;
 
   static bool _mounted = false;
 
@@ -654,5 +654,11 @@ Você precisa indicar o tipo de state para remover a classe utilizando 'Ide.disp
     workspaceManager!.dispose();
     state.dispose();
     panelRight = null;
+  }
+
+  static redraw(String state){
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Ide.state.find(state).redraw();
+    });
   }
 }
