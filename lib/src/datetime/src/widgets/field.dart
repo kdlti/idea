@@ -352,13 +352,13 @@ class _DateTimeFieldState extends State<DateTimeField> {
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           focusColor: decoration.focusColor,
-          enableFeedback: widget.enableFeedback,
           child: widget.padding == null
               ? result
               : Padding(
                   padding: widget.padding!,
                   child: result,
                 ),
+          enableFeedback: widget.enableFeedback ?? false,
         ),
       ),
     );
