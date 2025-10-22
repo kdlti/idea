@@ -153,7 +153,7 @@ class IdeDropdown<T> extends StatefulWidget {
 
   IdeDropdown({
     super.key,
-    required this.items,
+    this.items,
     required this.onChanged,
     this.initialItem,
     this.hintText,
@@ -174,10 +174,6 @@ class IdeDropdown<T> extends StatefulWidget {
     this.excludeSelected = true,
     this.onDropdownState,
   })  : assert(
-          items!.isNotEmpty,
-          'Items list must contain at least one item.',
-        ),
-        assert(
           initialItem == null || items!.contains(initialItem),
           'Initial item must match with one of the item in items list.',
         ),
@@ -196,7 +192,7 @@ class IdeDropdown<T> extends StatefulWidget {
 
   IdeDropdown.search({
     super.key,
-    required this.items,
+    this.items,
     required this.onChanged,
     this.initialItem,
     this.hintText,
@@ -220,10 +216,6 @@ class IdeDropdown<T> extends StatefulWidget {
     this.hideSelectedFieldWhenExpanded = false,
     this.onDropdownState,
   })  : assert(
-          items!.isNotEmpty,
-          'Items list must contain at least one item.',
-        ),
-        assert(
           initialItem == null || items!.contains(initialItem),
           'Initial item must match with one of the item in items list.',
         ),
@@ -274,7 +266,7 @@ class IdeDropdown<T> extends StatefulWidget {
 
   IdeDropdown.multiSelect({
     super.key,
-    required this.items,
+    this.items,
     required this.onListChanged,
     this.initialItems,
     this.listValidator,
@@ -294,13 +286,7 @@ class IdeDropdown<T> extends StatefulWidget {
     this.listItemPadding,
     this.onDropdownState,
   })  : assert(
-          items!.isNotEmpty,
-          'Items list must contain at least one item.',
-        ),
-        assert(
-          initialItems == null ||
-              initialItems.isEmpty ||
-              initialItems.any((e) => items!.contains(e)),
+          initialItems == null || initialItems.isEmpty || initialItems.any((e) => items!.contains(e)),
           'Initial items must match with the items in the items list.',
         ),
         _searchType = null,
@@ -319,7 +305,7 @@ class IdeDropdown<T> extends StatefulWidget {
 
   IdeDropdown.multiSelectSearch({
     super.key,
-    required this.items,
+    this.items,
     required this.onListChanged,
     this.initialItems,
     this.listValidator,
@@ -342,13 +328,7 @@ class IdeDropdown<T> extends StatefulWidget {
     this.listItemPadding,
     this.onDropdownState,
   })  : assert(
-          items!.isNotEmpty,
-          'Items list must contain at least one item.',
-        ),
-        assert(
-          initialItems == null ||
-              initialItems.isEmpty ||
-              initialItems.any((e) => items!.contains(e)),
+          initialItems == null || initialItems.isEmpty || initialItems.any((e) => items!.contains(e)),
           'Initial items must match with the items in the items list.',
         ),
         _searchType = _SearchType.onListData,
@@ -441,24 +421,22 @@ class _IdeDropdownState<T> extends State<IdeDropdown<T>> {
     return FormField<(T?, List<T>)>(
       initialValue: (selectedItemNotifier.value, selectedItemsNotifier.value),
       validator: (val) {
-        if (widget._dropdownType == _DropdownType.singleSelect &&
-            widget.validator != null) {
+        if (widget._dropdownType == _DropdownType.singleSelect && widget.validator != null) {
           return widget.validator!(val?.$1);
         }
-        if (widget._dropdownType == _DropdownType.multipleSelect &&
-            widget.listValidator != null) {
+        if (widget._dropdownType == _DropdownType.multipleSelect && widget.listValidator != null) {
           return widget.listValidator!(val?.$2 ?? []);
         }
         return null;
       },
       builder: (formFieldState) {
         return _OverlayBuilder(
-          onListOpened: (){
+          onListOpened: () {
             widget.onDropdownState?.call(DropdownState.opened);
           },
           overlay: (size, hideCallback) {
             return _DropdownOverlay<T>(
-              onListClosed: (){
+              onListClosed: () {
                 widget.onDropdownState?.call(DropdownState.closed);
               },
               onItemSelect: (T value) {
@@ -482,8 +460,7 @@ class _IdeDropdownState<T> extends State<IdeDropdown<T>> {
                   formFieldState.validate();
                 }
               },
-              noResultFoundText:
-                  widget.noResultFoundText ?? 'No result found.',
+              noResultFoundText: widget.noResultFoundText ?? 'No result found.',
               noResultFoundBuilder: widget.noResultFoundBuilder,
               items: widget.items ?? [],
               selectedItemNotifier: selectedItemNotifier,
@@ -513,8 +490,7 @@ class _IdeDropdownState<T> extends State<IdeDropdown<T>> {
               headerPadding: widget.expandedHeaderPadding,
               itemsListPadding: widget.itemsListPadding,
               listItemPadding: widget.listItemPadding,
-              searchRequestLoadingIndicator:
-                  widget.searchRequestLoadingIndicator,
+              searchRequestLoadingIndicator: widget.searchRequestLoadingIndicator,
               dropdownType: widget._dropdownType,
             );
           },
@@ -524,12 +500,8 @@ class _IdeDropdownState<T> extends State<IdeDropdown<T>> {
               child: _DropDownField<T>(
                 onTap: showCallback,
                 selectedItemNotifier: selectedItemNotifier,
-                border: formFieldState.hasError
-                    ? (decoration?.closedErrorBorder ?? _defaultErrorBorder)
-                    : decoration?.closedBorder,
-                borderRadius: formFieldState.hasError
-                    ? decoration?.closedErrorBorderRadius
-                    : decoration?.closedBorderRadius,
+                border: formFieldState.hasError ? (decoration?.closedErrorBorder ?? _defaultErrorBorder) : decoration?.closedBorder,
+                borderRadius: formFieldState.hasError ? decoration?.closedErrorBorderRadius : decoration?.closedBorderRadius,
                 shadow: decoration?.closedShadow,
                 hintStyle: decoration?.hintStyle,
                 headerStyle: decoration?.headerStyle,
