@@ -37,169 +37,117 @@ class IdeSidenavSubitem extends StatefulWidget {
 
 class IdeSidenavSubitemState extends State<IdeSidenavSubitem> {
   bool isHover = false;
-  ThemeData? theme;
-  String uid = '';
+  late final String uid = widget.id;
 
-  Color get color {
-    Color result = isHover ? theme!.primaryColor.withValues(alpha: 0.2) : Colors.transparent;
-
-    if (Ide.sidenavManager.isActiveSelected(uid)) {
-      result = theme!.primaryColor.withValues(alpha: 0.5);
-    }
-    return result;
+  Color _bgColor(ThemeData theme, bool isSelected) {
+    if (isSelected) return theme.primaryColor.withValues(alpha: 0.5);
+    if (isHover) return theme.primaryColor.withValues(alpha: 0.2);
+    return Colors.transparent;
   }
 
   double get right {
-    int length = 3;
+    int length = widget.value.isNotEmpty ? widget.value.length : 3;
     double size = 40;
-    if (widget.value.isNotEmpty) {
-      length = (widget.value.length);
-    }
-    if (length > 2) {
-      size = 50;
-    }
-    if (length > 3) {
-      size = 60;
-    }
+    if (length > 2) size = 50;
+    if (length > 3) size = 60;
     return size;
   }
 
   @override
-  void initState() {
-    super.initState();
-    //uid = ApiSecurity.uidSha1(widget.id);
-    uid = widget.id;
-    Ide.sidenavManager.addSidenavSubitemState(uid, this);
-  }
-
-  redraw() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {});
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    theme = Theme.of(context);
+    final theme = Theme.of(context);
+    final bool isEnable = widget.enabled && widget.onPressed != null;
 
-    bool isEnable = widget.enabled && widget.onPressed != null;
+    return Obx(() {
+      final bool isSelected = Ide.sidenavManager.isActiveSelected(uid);
+      final fgColor = (isHover || isSelected) ? Colors.black87 : const Color(0xFF767676);
 
-    return Obx(() => IgnorePointer(
-          ignoring: !isEnable,
-          child: Opacity(
-            opacity: isEnable ? 1 : 0.3,
-            child: InkWell(
-              hoverColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              splashColor: Colors.transparent,
-              onHover: (bool value) {
-                setState(() {
-                  isHover = value;
-                });
-              },
-              onTap: widget.onPressed != null && isEnable
-                  ? () {
-                      Ide.sidenavManager.activeOpened = widget.uidParent!;
-                      Ide.sidenavManager.activeSelected = uid;
-                      widget.onPressed!();
-                    }
-                  : null,
-              child: Container(
-                margin: const EdgeInsets.only(right: 10),
-                height: 32,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: const BorderRadius.only(
-                    bottomRight: Radius.circular(50),
-                    topRight: Radius.circular(50),
+      return IgnorePointer(
+        ignoring: !isEnable,
+        child: Opacity(
+          opacity: isEnable ? 1 : 0.3,
+          child: InkWell(
+            hoverColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            onHover: (value) => setState(() => isHover = value),
+            onTap: isEnable
+                ? () {
+                    // Seleciona subitem e garante que o pai esteja aberto
+                    Ide.sidenavManager.selectUid(uid, parentUid: widget.uidParent);
+                    widget.onPressed?.call();
+                  }
+                : null,
+            child: Container(
+              margin: const EdgeInsets.only(right: 10),
+              height: 32,
+              decoration: BoxDecoration(
+                color: _bgColor(theme, isSelected),
+                borderRadius: const BorderRadius.only(bottomRight: Radius.circular(50), topRight: Radius.circular(50)),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 0,
+                    child: Opacity(
+                      opacity: (isHover || isSelected) ? 1 : 0,
+                      child: Container(
+                        width: 4,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: theme.primaryColor,
+                          borderRadius: const BorderRadius.only(bottomRight: Radius.circular(5), topRight: Radius.circular(5)),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      left: 0,
-                      child: Opacity(
-                        opacity: isHover || Ide.sidenavManager.isActiveSelected(uid) ? 1 : 0,
-                        child: Container(
-                          width: 4,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: theme!.primaryColor,
-                            borderRadius: const BorderRadius.only(
-                              bottomRight: Radius.circular(5),
-                              topRight: Radius.circular(5),
-                            ),
-                          ),
-                        ),
-                      ),
+                  Positioned(
+                    left: 30,
+                    top: 6,
+                    child: Icon(widget.icon, size: widget.iconSize, color: fgColor),
+                  ),
+                  Positioned(
+                    top: 7,
+                    left: 60,
+                    right: right,
+                    child: Text(
+                      widget.label,
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: fgColor),
+                      maxLines: 1,
+                      overflow: TextOverflow.clip,
+                      softWrap: false,
                     ),
-                    Positioned(
-                      left: 30,
-                      top: 6,
-                      child: Icon(
-                        widget.icon,
-                        size: widget.iconSize,
-                        color: isHover || Ide.sidenavManager.isActiveSelected(uid) ? Colors.black87 : const Color(0xFF767676),
-                      ),
-                    ),
-                    Positioned(
-                      top: 7,
-                      left: 60,
-                      right: right,
-                      child: Text(
-                        widget.label,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          color: isHover || Ide.sidenavManager.isActiveSelected(uid) ? Colors.black87 : const Color(0xFF767676),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.clip,
-                        softWrap: false,
-                      ),
-                    ),
-                    menuOptions(context),
-                  ],
-                ),
+                  ),
+                  _menuOptions(context, isSelected),
+                ],
               ),
             ),
           ),
-        ));
-  }
-
-  Widget menuOptions(BuildContext context) {
-    theme = Theme.of(context);
-
-    if (widget.value.isNotEmpty) {
-      return Positioned(
-        right: 8,
-        top: 6,
-        child: IdeVisibilityBuilder(
-          condition: widget.value.isNotEmpty,
-          child: () => Text(
-            widget.value,
-            style: const TextStyle(fontSize: 14),
-          ),
         ),
       );
-    } else if (widget.progress != null) {
+    });
+  }
+
+  Widget _menuOptions(BuildContext context, bool isSelected) {
+    final theme = Theme.of(context);
+
+    if (widget.value.isNotEmpty) {
+      return Positioned(right: 8, top: 6, child: Text(widget.value, style: const TextStyle(fontSize: 14)));
+    }
+
+    if (widget.progress != null) {
       return Positioned(
         right: 8,
         top: 7,
         child: SizedBox(
           width: 18,
           height: 18,
-          child: CircularProgressIndicator(
-            value: widget.progress,
-            strokeWidth: 3,
-            backgroundColor: Colors.black12,
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-          ),
+          child: CircularProgressIndicator(value: widget.progress, strokeWidth: 3, backgroundColor: Colors.black12, valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor)),
         ),
       );
-    } else if (widget.menu.isNotEmpty) {
+    }
+
+    if (widget.menu.isNotEmpty) {
       return Positioned(
         right: 4,
         top: 3,
@@ -208,23 +156,13 @@ class IdeSidenavSubitemState extends State<IdeSidenavSubitem> {
           child: Container(
             width: 25,
             height: 25,
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(50)),
-            ),
-            child: Icon(
-              Icons.more_vert,
-              size: 24,
-              color: isHover || Ide.sidenavManager.isActiveSelected(uid) ? theme!.primaryColor : const Color(0xFF767676),
-            ),
+            decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(50))),
+            child: Icon(Icons.more_vert, size: 24, color: (isHover || isSelected) ? theme.primaryColor : const Color(0xFF767676)),
           ),
         ),
       );
-    } else {
-      return const Positioned(
-        right: 10,
-        top: 7,
-        child: SizedBox(width: 0, height: 0),
-      );
     }
+
+    return const Positioned(right: 10, top: 7, child: SizedBox.shrink());
   }
 }
