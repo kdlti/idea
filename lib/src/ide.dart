@@ -14,24 +14,16 @@ typedef OnNext = void Function();
 
 class Ide {
   /// Método utilitário para logar mensagens de erro.
-  static get logError => Logger(
-    printer: PrettyPrinter(),
-  ).e;
+  static get logError => Logger(printer: PrettyPrinter()).e;
 
   /// Método utilitário para logar mensagens de informação.
-  static get logInfo => Logger(
-    printer: PrettyPrinter(),
-  ).i;
+  static get logInfo => Logger(printer: PrettyPrinter()).i;
 
   /// Método utilitário para logar mensagens de depuração.
-  static get logDebug => Logger(
-    printer: PrettyPrinter(),
-  ).d;
+  static get logDebug => Logger(printer: PrettyPrinter()).d;
 
   /// Método utilitário para logar mensagens de aviso.
-  static get logWarning => Logger(
-    printer: PrettyPrinter(),
-  ).w;
+  static get logWarning => Logger(printer: PrettyPrinter()).w;
 
   static bool _mounted = false;
 
@@ -519,11 +511,12 @@ Você precisa indicar o tipo de state para remover a classe utilizando 'Ide.disp
   }
 
   static Future<void> toRoute(String path) async {
-    if (activeRoute == path) {
-      return;
-    }
+    final current = Get.currentRoute;
+    if (current == path) return;
+
     mounted = false;
-    await Get.offNamed(path);
+
+    await Get.toNamed(path);
   }
 
   //================================================================================
@@ -636,11 +629,7 @@ Você precisa indicar o tipo de state para remover a classe utilizando 'Ide.disp
   //
   //================================================================================
   static Future<S?> dialog<S>(widget) async {
-    return await Get.dialog<S>(
-      widget,
-      barrierColor: Colors.black87.withValues(alpha: 0.3),
-      barrierDismissible: false,
-    );
+    return await Get.dialog<S>(widget, barrierColor: Colors.black87.withValues(alpha: 0.3), barrierDismissible: false);
   }
 
   //================================================================================
@@ -656,7 +645,7 @@ Você precisa indicar o tipo de state para remover a classe utilizando 'Ide.disp
     panelRight = null;
   }
 
-  static redraw(String state){
+  static redraw(String state) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Ide.state.find(state).redraw();
     });
