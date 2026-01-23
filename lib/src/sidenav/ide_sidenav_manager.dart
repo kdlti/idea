@@ -1,93 +1,58 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
-import 'package:idea/package.dart';
 
 class IdeSidenavManager {
-  bool allowMultipleOpen = false;
+  /// Conjunto reativo de itens abertos (expandido).
+  final RxSet<String> openedItems = <String>{}.obs;
 
-  Map<String, IdeSidenavItemState> mapSidenavItemState = {};
-
-  void addSidenavItemState(String id, IdeSidenavItemState state) {
-    mapSidenavItemState[id] = state;
-  }
-
-  Map<String, IdeSidenavSubitemState> mapSidenavSubitemState = {};
-
-  void addSidenavSubitemState(String id, IdeSidenavSubitemState state) {
-    mapSidenavSubitemState[id] = state;
-  }
-
-  void reset() {
-    mapSidenavItemState.clear();
-    mapSidenavSubitemState.clear();
-  }
-
-  void redraw() {
-    mapSidenavItemState.forEach((key, state) {
-      state.redraw();
-    });
-    mapSidenavSubitemState.forEach((key, state) {
-      state.redraw();
-    });
-  }
-
-  //========================================
-  // activeSelected
-  //========================================
-  final RxString _activeSelected = "".obs;
-
-  set activeSelected(String uid) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _activeSelected.value = uid;
-    });
-
-    if (!allowMultipleOpen) {
-      redraw();
-    }
-  }
+  /// Item/subitem selecionado (para highlight).
+  final RxString _activeSelected = ''.obs;
 
   String get activeSelected => _activeSelected.value;
+  set activeSelected(String uid) => _activeSelected.value = uid;
 
-  String _activeOpened = "";
+  bool isActiveSelected(String uid) => _activeSelected.value == uid;
+  bool isOpen(String uid) => openedItems.contains(uid);
 
-  set activeOpened(String uid) {
-    _activeOpened = uid;
-    if (!allowMultipleOpen) {
-      redraw();
+  void toggleOpen(String uid) {
+    if (openedItems.contains(uid)) {
+      openedItems.remove(uid);
+    } else {
+      openedItems.add(uid);
     }
   }
 
-  bool isActiveOpened(String uid) {
-    return _activeOpened == uid;
-  }
+  void open(String uid) => openedItems.add(uid);
+  void close(String uid) => openedItems.remove(uid);
+  void closeAll() => openedItems.clear();
 
-  bool isActiveSelected(String uid) {
-    return activeSelected == uid;
-  }
-
-  void select(String id) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      //String uid = ApiSecurity.uidSha1(id);
-      String uid = id;
-      selectUid(uid);
+  void resetUIState({bool closeMenus = false}) {
+    _runAfterBuild(() {
+      activeSelected = '';
+      if (closeMenus) openedItems.clear();
     });
   }
 
-  void selectUid(String uid) {
-    if (mapSidenavItemState.containsKey(uid)) {
+  /// Seleciona um uid e, se for subitem, abre o pai.
+  void selectUid(String uid, {String? parentUid}) {
+    _runAfterBuild(() {
       activeSelected = uid;
-      IdeSidenavItemState state = mapSidenavItemState[uid]!;
-      if (state.widget.subitems != null) {
-        activeOpened = uid;
-        Ide.sidenavManager.activeOpened = uid;
+      if (parentUid != null && parentUid.isNotEmpty) {
+        open(parentUid);
       }
-    } else if (mapSidenavSubitemState.containsKey(uid)) {
-      activeSelected = uid;
-      IdeSidenavSubitemState state = mapSidenavSubitemState[uid]!;
-      if (state.widget.uidParent != null) {
-        activeOpened = state.widget.uidParent!;
-        Ide.sidenavManager.activeOpened = state.widget.uidParent!;
-      }
+    });
+  }
+
+  void _runAfterBuild(VoidCallback fn) {
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    final isBuilding = phase == SchedulerPhase.persistentCallbacks || phase == SchedulerPhase.midFrameMicrotasks;
+
+    if (isBuilding) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => fn());
+    } else {
+      fn();
     }
   }
 }

@@ -5,15 +5,8 @@ enum IdeSidenavObserverType { content, rightPanel }
 
 class IdeSidenav extends StatelessWidget {
   final List<IdeSidenavItem>? children;
-  final bool allowMultipleOpen;
 
-  IdeSidenav({
-    super.key,
-    this.children,
-    this.allowMultipleOpen = false,
-  }){
-    Ide.sidenavManager.allowMultipleOpen = allowMultipleOpen ;
-  }
+  IdeSidenav({super.key, this.children}) {}
 
   //========================================
   // scrollToSelectedContent
@@ -21,8 +14,7 @@ class IdeSidenav extends StatelessWidget {
   final ScrollController _scrollController = ScrollController();
 
   void _scrollToSelectedContent(bool isExpanded, double previousOffset, int index) {
-    _scrollController.animateTo(isExpanded ? (35.0 * index) : previousOffset,
-        duration: const Duration(milliseconds: 300), curve: Curves.linear);
+    _scrollController.animateTo(isExpanded ? (35.0 * index) : previousOffset, duration: const Duration(milliseconds: 300), curve: Curves.linear);
   }
 
   //========================================
@@ -52,11 +44,7 @@ class IdeSidenav extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        return Container(
-          alignment: Alignment.topLeft,
-          width: constraints.maxWidth,
-          child: _buildContent(constraints),
-        );
+        return Container(alignment: Alignment.topLeft, width: constraints.maxWidth, child: _buildContent(constraints));
       },
     );
   }
