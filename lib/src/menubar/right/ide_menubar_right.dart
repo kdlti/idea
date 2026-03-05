@@ -90,7 +90,6 @@ class IdeMenubarRight {
             IdeMenubarRightButtonTab(
               tooltip: item.buttonMenu!.tooltip,
               onPressed: () {
-                Ide.activeContent!.panelRightManager.middlewaresOnPanelHide();
                 Ide.showPanelRight(item.id, redraw: true);
                 if(item.buttonMenu!.onPressed != null) {
                   item.buttonMenu!.onPressed!();
