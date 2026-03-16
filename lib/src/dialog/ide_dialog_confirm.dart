@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:idea/package.dart';
 
-import 'ide_dialog_confirm.dart';
+import 'ide_dialog_button.dart';
 
 // Enum para representar os resultados possíveis do diálogo de confirmação
 enum IdeDialogConfirmResult { yes, no, cancel, ok, close }
@@ -32,6 +32,7 @@ class IdeDialogConfirm extends StatelessWidget {
   final double width;
   final Widget? child;
   final bool allowHideMessage;
+  final bool closeRouteOnAction;
   final VoidCallback? onYes;
   final VoidCallback? onNo;
   final VoidCallback? onCancel;
@@ -47,7 +48,8 @@ class IdeDialogConfirm extends StatelessWidget {
   bool get checkBoxValue => _checkBoxValue.value;
 
   /// Construtor do diálogo de confirmação
-  IdeDialogConfirm({super.key,
+  IdeDialogConfirm({
+    super.key,
     this.buttonCancel = false,
     this.buttonYes = false,
     this.buttonNo = false,
@@ -59,6 +61,7 @@ class IdeDialogConfirm extends StatelessWidget {
     this.height = 130,
     this.width = 470,
     this.allowHideMessage = false,
+    this.closeRouteOnAction = true,
     this.child,
     this.icon,
     this.iconColor,
@@ -73,60 +76,53 @@ class IdeDialogConfirm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black87.withValues(alpha: 0.3),
-            spreadRadius: 0,
-            blurRadius: 5,
-            offset: const Offset(0, 1),
-          ),
-        ],
-        borderRadius: const BorderRadius.all(Radius.circular(5)),
-      ),
-      width: width,
-      height: height,
-      child: Stack(
-        children: [
-          buildTitle(), // Método para construir o título do diálogo
-          IdeVisibilityBuilder(
-            condition: icon != null,
-            child: () => Positioned(
-              left: 15,
-              top: 35,
-              child: Icon(
-                icon,
-                size: 50,
-                color: iconColor ?? Get.theme.primaryColorLight,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final viewportMaxHeight = MediaQuery.sizeOf(context).height * 0.8;
+        final parentMaxHeight = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : viewportMaxHeight;
+        final maxDialogHeight = parentMaxHeight < viewportMaxHeight
+            ? parentMaxHeight
+            : viewportMaxHeight;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black87.withValues(alpha: 0.3),
+                spreadRadius: 0,
+                blurRadius: 5,
+                offset: const Offset(0, 1),
               ),
-            ),
+            ],
+            borderRadius: const BorderRadius.all(Radius.circular(5)),
           ),
-          Positioned(
-            left: 80,
-            top: 40,
-            right: 20,
-            bottom: 40,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  message,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-                ),
-                const SizedBox(height: 5),
-                IdeVisibilityBuilder(
-                  condition: detail != null,
-                  child: () => Text(detail ?? '', style: const TextStyle(fontSize: 12), maxLines: 3),
-                ),
-              ],
-            ),
+          width: width,
+          constraints: BoxConstraints(
+            minHeight: height,
+            maxHeight: maxDialogHeight < height ? height : maxDialogHeight,
           ),
-          buildButtons(), // Método para construir os botões do diálogo
-        ],
-      ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              buildTitle(),
+              Flexible(fit: FlexFit.loose, child: buildContent()),
+              buildButtons(),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  void handleAction(IdeDialogConfirmResult result, VoidCallback? callback) {
+    if (closeRouteOnAction) {
+      Get.back(result: result);
+    }
+
+    callback?.call();
   }
 
   /// Método que constrói o título do diálogo
@@ -136,30 +132,32 @@ class IdeDialogConfirm extends StatelessWidget {
       width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(width: 0.5, color: Colors.black12),
-        ),
+        border: Border(bottom: BorderSide(width: 0.5, color: Colors.black12)),
       ),
       child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 10, top: 0),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: Colors.black87),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 10, right: 8),
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black87,
+                ),
+              ),
             ),
           ),
-          const Spacer(flex: 1),
           Obx(
-                () => Material(
+            () => Material(
               color: Colors.transparent,
               child: InkWell(
                 hoverColor: Colors.red,
                 onTap: () {
-                  Get.back(result: IdeDialogConfirmResult.close);
-                  if (onCancel != null) {
-                    onCancel!();
-                  }
+                  handleAction(IdeDialogConfirmResult.close, onCancel);
                 },
                 onHover: (bool value) {
                   isHover = value;
@@ -184,84 +182,116 @@ class IdeDialogConfirm extends StatelessWidget {
     );
   }
 
+  Widget buildContent() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 10, 20, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (icon != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Icon(
+                icon,
+                size: 50,
+                color: iconColor ?? Get.theme.primaryColorLight,
+              ),
+            ),
+            const SizedBox(width: 15),
+          ],
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  if (detail != null) ...[
+                    const SizedBox(height: 5),
+                    Text(detail ?? '', style: const TextStyle(fontSize: 12)),
+                  ],
+                  if (child != null) ...[const SizedBox(height: 10), child!],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Método que constrói os botões de ação do diálogo
   buildButtons() {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
+    return SizedBox(
       height: 50,
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.only(left: 15, right: 10),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            IdeVisibilityBuilder(
-              condition: allowHideMessage,
-              child: () => Obx(
-                    () => Checkbox(
-                    value: checkBoxValue,
-                    onChanged: (bool? value) {
-                      checkBoxValue = value!;
-                    }),
+            if (allowHideMessage)
+              Expanded(
+                child: Row(
+                  children: [
+                    Obx(
+                      () => Checkbox(
+                        value: checkBoxValue,
+                        onChanged: (bool? value) {
+                          checkBoxValue = value!;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Expanded(
+                      child: Text(
+                        'Não mostrar esta mensagem novamente',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              const Spacer(),
+            if (buttonYes)
+              IdeDialogButton(
+                label: 'Sim',
+                selected: buttonYesSelected,
+                onPressed: () {
+                  handleAction(IdeDialogConfirmResult.yes, onYes);
+                },
               ),
-            ),
-            IdeVisibilityBuilder(
-              condition: allowHideMessage,
-              child: () => const Text(
-                'Não mostrar esta mensagem novamente',
-                style: TextStyle(fontSize: 12),
+            if (buttonNo)
+              IdeDialogButton(
+                label: 'Não',
+                selected: buttonNoSelected,
+                onPressed: () {
+                  handleAction(IdeDialogConfirmResult.no, onNo);
+                },
               ),
-            ),
-            const Spacer(),
-            IdeVisibilityBuilder(
-              condition: buttonYes,
-              child: () => IdeDialogButton(
-                  label: 'Sim',
-                  selected: buttonYesSelected,
-                  onPressed: () {
-                    Get.back(result: IdeDialogConfirmResult.yes);
-                    if (onYes != null) {
-                      onYes!();
-                    }
-                  }),
-            ),
-            IdeVisibilityBuilder(
-              condition: buttonNo,
-              child: () => IdeDialogButton(
-                  label: 'Não',
-                  selected: buttonNoSelected,
-                  onPressed: () {
-                    Get.back(result: IdeDialogConfirmResult.no);
-                    if (onNo != null) {
-                      onNo!();
-                    }
-                  }),
-            ),
-            IdeVisibilityBuilder(
-              condition: buttonCancel,
-              child: () => IdeDialogButton(
-                  label: 'Cancelar',
-                  selected: buttonCancelSelected,
-                  onPressed: () {
-                    Get.back(result: IdeDialogConfirmResult.cancel);
-                    if (onCancel != null) {
-                      onCancel!();
-                    }
-                  }),
-            ),
-            IdeVisibilityBuilder(
-              condition: buttonOk,
-              child: () => IdeDialogButton(
-                  label: 'OK',
-                  selected: buttonOkSelected,
-                  onPressed: () {
-                    Get.back(result: IdeDialogConfirmResult.ok);
-                    if (onOk != null) {
-                      onOk!();
-                    }
-                  }),
-            ),
+            if (buttonCancel)
+              IdeDialogButton(
+                label: 'Cancelar',
+                selected: buttonCancelSelected,
+                onPressed: () {
+                  handleAction(IdeDialogConfirmResult.cancel, onCancel);
+                },
+              ),
+            if (buttonOk)
+              IdeDialogButton(
+                label: 'OK',
+                selected: buttonOkSelected,
+                onPressed: () {
+                  handleAction(IdeDialogConfirmResult.ok, onOk);
+                },
+              ),
           ],
         ),
       ),
