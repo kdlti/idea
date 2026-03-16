@@ -6,6 +6,59 @@ const _defaultOverlayIconDown = Icon(
   size: 20,
 );
 
+const _dropdownHeaderTrailingWidth = 20.0;
+const _dropdownHeaderMinContentWidth = 12.0;
+
+class _DropdownResponsiveHeaderRow extends StatelessWidget {
+  final Widget child;
+  final Widget trailing;
+  final double preferredSpacing;
+
+  const _DropdownResponsiveHeaderRow({
+    required this.child,
+    required this.trailing,
+    this.preferredSpacing = 12,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : _dropdownHeaderTrailingWidth +
+                  _dropdownHeaderMinContentWidth +
+                  preferredSpacing;
+        final trailingWidth = availableWidth <= 0
+            ? 0.0
+            : availableWidth
+                  .clamp(0.0, _dropdownHeaderTrailingWidth)
+                  .toDouble();
+        final remainingWidth = availableWidth - trailingWidth;
+        final spacing = remainingWidth <= _dropdownHeaderMinContentWidth
+            ? 0.0
+            : (remainingWidth - _dropdownHeaderMinContentWidth)
+                  .clamp(0.0, preferredSpacing)
+                  .toDouble();
+
+        return Row(
+          children: [
+            Expanded(child: child),
+            if (spacing > 0) SizedBox(width: spacing),
+            SizedBox(
+              width: trailingWidth,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FittedBox(fit: BoxFit.scaleDown, child: trailing),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _DropDownField<T> extends StatefulWidget {
   final VoidCallback onTap;
   final ValueNotifier<T?> selectedItemNotifier;
@@ -88,11 +141,9 @@ class _DropDownFieldState<T> extends State<_DropDownField<T>> {
       itemList != null ? itemList.join(', ') : oneItem.toString(),
       maxLines: widget.maxLines,
       overflow: TextOverflow.ellipsis,
-      style: widget.headerStyle ??
-          const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
+      style:
+          widget.headerStyle ??
+          const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
     );
   }
 
@@ -101,11 +152,9 @@ class _DropDownFieldState<T> extends State<_DropDownField<T>> {
       hint,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: widget.hintStyle ??
-          const TextStyle(
-            fontSize: 16,
-            color: Color(0xFFA7A7A7),
-          ),
+      style:
+          widget.hintStyle ??
+          const TextStyle(fontSize: 16, color: Color(0xFFA7A7A7)),
     );
   }
 
@@ -132,21 +181,18 @@ class _DropDownFieldState<T> extends State<_DropDownField<T>> {
           borderRadius: widget.borderRadius ?? _defaultBorderRadius,
           boxShadow: widget.shadow,
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: switch (widget.dropdownType) {
-                _DropdownType.singleSelect => selectedItem != null
-                    ? headerBuilder(context)
-                    : hintBuilder(context),
-                _DropdownType.multipleSelect => selectedItems.isNotEmpty
-                    ? headerListBuilder(context)
-                    : hintBuilder(context),
-              },
-            ),
-            const SizedBox(width: 12),
-            widget.suffixIcon ?? _defaultOverlayIconDown,
-          ],
+        child: _DropdownResponsiveHeaderRow(
+          trailing: widget.suffixIcon ?? _defaultOverlayIconDown,
+          child: switch (widget.dropdownType) {
+            _DropdownType.singleSelect =>
+              selectedItem != null
+                  ? headerBuilder(context)
+                  : hintBuilder(context),
+            _DropdownType.multipleSelect =>
+              selectedItems.isNotEmpty
+                  ? headerListBuilder(context)
+                  : hintBuilder(context),
+          },
         ),
       ),
     );
