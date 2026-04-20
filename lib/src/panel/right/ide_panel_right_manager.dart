@@ -83,8 +83,17 @@ class IdePanelRightManager {
     if (_panelsRight.containsKey(uid)) {
       activeUid = uid;
       Ide.panelRight = active;
+      final bool isSelectedPanel = Ide.activeContent!.panelRightSelected == uid || Ide.panelRight?.id == uid;
       Ide.panelRight!.visible = false;
       middlewaresOnPanelHide();
+
+      if (isSelectedPanel) {
+        Ide.activeContent!.panelRightSelected = '';
+        activeUid = '';
+        activeId = '';
+        oldActiveUid = '';
+      }
+
       Ide.globalRedraw();
     }
   }
@@ -109,4 +118,3 @@ class IdePanelRightManager {
     }
   }
 }
-

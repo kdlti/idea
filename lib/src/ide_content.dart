@@ -103,6 +103,11 @@ class IdeContent<T> {
   /// Define o UID do painel direito selecionado e notifica o [Ide.sidenavManager].
   set panelRightSelected(String uid) {
     _panelRightSelected.value = uid;
+    if (uid.isEmpty) {
+      Ide.sidenavManager.resetUIState();
+      return;
+    }
+
     Ide.sidenavManager.selectUid(uid);
   }
 

@@ -287,10 +287,7 @@ Você precisa indicar o tipo de state para remover a classe utilizando 'Ide.disp
 
   static void hidePanelRight() {
     if (hasPanelRight) {
-      panelRight!.visible = false;
       activeContent!.panelRightManager.hide(panelRight!.id);
-
-      globalRedraw();
     }
   }
 
@@ -407,7 +404,7 @@ Você precisa indicar o tipo de state para remover a classe utilizando 'Ide.disp
   }
 
   static Future<void> showPanelRight(String id, {bool redraw = true}) async {
-    if (hasPanelRight) {
+    if (activeContent?.panelsRight != null) {
       final currentPanel = panelRight;
       if (currentPanel != null && currentPanel.id != id) {
         activeContent!.panelRightManager.middlewaresOnPanelHide();
